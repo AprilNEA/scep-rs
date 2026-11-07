@@ -1,0 +1,21 @@
+[package]
+name = "scep"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Pure-Rust SCEP (RFC 8894) server and client"
+repository = "https://github.com/AprilNEA/scep-rs"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["scep", "rfc8894", "pki", "x509", "mdm"]
+categories = ["cryptography", "network-programming"]
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
