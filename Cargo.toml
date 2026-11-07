@@ -1,21 +1,44 @@
-[package]
-name = "scep"
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
+[workspace.package]
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.85"
-description = "Pure-Rust SCEP (RFC 8894) server and client"
 repository = "https://github.com/AprilNEA/scep-rs"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 keywords = ["scep", "rfc8894", "pki", "x509", "mdm"]
 categories = ["cryptography", "network-programming"]
 
-[dependencies]
+[workspace.dependencies]
+scep = { path = ".", version = "0.0.0" }
+scep-protocol = { path = "crates/protocol", version = "0.0.0" }
+scep-server = { path = "crates/server", version = "0.0.0" }
+scep-client = { path = "crates/client", version = "0.0.0" }
 
-[lints.rust]
+[workspace.lints.rust]
 unsafe_code = "forbid"
 missing_docs = "warn"
 
-[lints.clippy]
-all = "warn"
-pedantic = "warn"
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+
+[package]
+name = "scep"
+description = "Pure-Rust SCEP (RFC 8894) server and client"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

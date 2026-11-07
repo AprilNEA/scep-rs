@@ -1,0 +1,20 @@
+[package]
+name = "scep-cli"
+description = "SCEP (RFC 8894) command line: getcacaps, getcacert, enroll, and a file-backed test CA"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "scep"
+path = "src/main.rs"
+
+[dependencies]
+
+[lints]
+workspace = true

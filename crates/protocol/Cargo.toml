@@ -1,0 +1,16 @@
+[package]
+name = "scep-protocol"
+description = "SCEP (RFC 8894) wire format: attributes, capabilities, pkiMessage, pkcsPKIEnvelope"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true
