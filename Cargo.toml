@@ -38,7 +38,15 @@ readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[features]
+default = ["server", "client"]
+server = ["dep:scep-server"]
+client = ["dep:scep-client"]
+
 [dependencies]
+scep-protocol.workspace = true
+scep-server = { workspace = true, optional = true }
+scep-client = { workspace = true, optional = true }
 
 [lints]
 workspace = true
