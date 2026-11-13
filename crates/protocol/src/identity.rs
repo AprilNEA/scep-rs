@@ -5,7 +5,7 @@ use std::fmt;
 use der::{SecretDocument, pem::PemLabel as _};
 use pkcs1::{DecodeRsaPrivateKey as _, RsaPrivateKeyRef};
 use pkcs8::{DecodePrivateKey as _, DecodePublicKey as _, PrivateKeyInfoRef};
-use rsa::{RsaPrivateKey, RsaPublicKey};
+use rsa::{PrivateKey, PublicKey};
 use x509_cert::{Certificate, der::DecodePem as _, der::Encode as _};
 
 use crate::error::Error;
@@ -23,7 +23,7 @@ mod tests;
 #[derive(Clone)]
 pub struct Identity {
     certificate: Certificate,
-    key: RsaPrivateKey,
+    key: PrivateKey,
 }
 
 impl Identity {
@@ -33,12 +33,12 @@ impl Identity {
     ///
     /// Returns [`Error::PublicKey`] if the certificate's public key is not an
     /// RSA key and [`Error::KeyMismatch`] if it is not the public key of `key`.
-    pub fn new(certificate: Certificate, key: RsaPrivateKey) -> Result<Self, Error> {
+    pub fn new(certificate: Certificate, key: PrivateKey) -> Result<Self, Error> {
         let spki = certificate
             .tbs_certificate()
             .subject_public_key_info()
             .to_der()?;
-        let certified = RsaPublicKey::from_public_key_der(&spki)?;
+        let certified = PublicKey::from_public_key_der(&spki)?;
         if certified != key.to_public_key() {
             return Err(Error::KeyMismatch);
         }
@@ -57,8 +57,8 @@ impl Identity {
         let certificate = Certificate::from_pem(certificate)?;
         let (label, document) = SecretDocument::from_pem(key)?;
         let key = match label {
-            PrivateKeyInfoRef::PEM_LABEL => RsaPrivateKey::from_pkcs8_der(document.as_bytes())?,
-            RsaPrivateKeyRef::PEM_LABEL => RsaPrivateKey::from_pkcs1_der(document.as_bytes())?,
+            PrivateKeyInfoRef::PEM_LABEL => PrivateKey::from_pkcs8_der(document.as_bytes())?,
+            RsaPrivateKeyRef::PEM_LABEL => PrivateKey::from_pkcs1_der(document.as_bytes())?,
             _ => {
                 return Err(Error::PemLabel {
                     label: label.to_owned(),
@@ -77,7 +77,7 @@ impl Identity {
 
     /// The private key.
     #[must_use]
-    pub fn key(&self) -> &RsaPrivateKey {
+    pub fn key(&self) -> &PrivateKey {
         &self.key
     }
 }

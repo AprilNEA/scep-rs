@@ -19,11 +19,27 @@ openssl req -new -key client.key -out client.csr -config client-req.cnf \
 scep serve --cert ../ca/ra.pem --key ../ca/ra.key --chain ../ca/root.pem \
   --listen 127.0.0.1:18080 --capture-dir /tmp/capture &
 sscep getca -u http://127.0.0.1:18080/scep -c /tmp/ca.crt
-sscep enroll -u http://127.0.0.1:18080/scep -c /tmp/ca.crt-1 -e /tmp/ca.crt-0 \
+sscep enroll -u http://127.0.0.1:18080/scep -c /tmp/ca.crt \
   -k client.key -r client.csr -l /tmp/client.crt -S sha256 -E aes
 ```
 
+Pass the common `-c` filename base so sscep loads the CA/RA set and selects both
+the responder's signing and encryption certificate. Capture mode returns HTTP
+501 and issues no certificate; the request bytes are still recorded.
+
 The self-signed signer certificate carries a 32-byte serial number (the
 transaction ID as ASCII). `x509_cert::Certificate` with the default `Rfc5280`
-profile rejects serials longer than 21 bytes, so `cms::SignedData` cannot decode
-this message; see `docs/design.md` for the consequence.
+profile rejects serials longer than 21 bytes, so unpatched `cms::SignedData`
+cannot decode this message.
+
+M2 uses the pinned upstream CMS profile extension to decode peer certificates
+and identifiers as `Raw`, while local identities and issued certificates remain
+strict. Both key-binding policies now return the original CSR and challenge
+from this fixture, and replies preserve the long recipient serial. The
+upstream changes are unreleased; see the [dependency pins and publication gate](../../../docs/design.md#4-dependencies).
+
+Real M2 enrollment with the test CA also succeeds with default sscep algorithm
+negotiation, AES-192 and AES-256. OpenSSL independently verifies the returned
+CMS signature, decrypts the certificate set and verifies the issued chain. See
+the root [usage example](../../../README.md#usage) to run issuance instead of
+capture mode.

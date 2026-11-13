@@ -13,10 +13,31 @@ keywords = ["scep", "rfc8894", "pki", "x509", "mdm"]
 categories = ["cryptography", "network-programming"]
 
 [workspace.dependencies]
+base64 = "0.23"
+bytes = "1"
+cms = { version = "0.3.0-rc.1", default-features = false, features = ["builder", "std"] }
+const-oid = { version = "0.10", features = ["db"] }
+der = { version = "0.8", features = ["alloc", "oid", "ber", "pem"] }
+getrandom = { version = "0.4", features = ["std", "sys_rng"] }
+http = "1"
+rand = "0.10"
+sha2 = "0.11"
+signature = "3"
+strum = { version = "0.28", features = ["derive"] }
+thiserror = "2"
+tokio = "1.54.1"
+zeroize = "1"
 scep = { path = ".", version = "0.0.0" }
 scep-protocol = { path = "crates/protocol", version = "0.0.0" }
 scep-server = { path = "crates/server", version = "0.0.0" }
 scep-client = { path = "crates/client", version = "0.0.0" }
+
+[patch.crates-io]
+# https://github.com/RustCrypto/formats/pull/2534
+der = { git = "https://github.com/RustCrypto/formats", rev = "8ca00ea75bb966e69978720b526e056d7f1b5041" }
+# https://github.com/RustCrypto/formats/pull/2535
+cms = { git = "https://github.com/RustCrypto/formats", rev = "c49a139a652a6afeff7d081a23ed8b80170a0cbf" }
+x509-cert = { git = "https://github.com/RustCrypto/formats", rev = "c49a139a652a6afeff7d081a23ed8b80170a0cbf" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
@@ -50,3 +71,15 @@ scep-client = { workspace = true, optional = true }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+base64.workspace = true
+bytes.workspace = true
+cms.workspace = true
+const-oid.workspace = true
+der.workspace = true
+http.workspace = true
+rand.workspace = true
+sha2.workspace = true
+signature.workspace = true
+tokio = { workspace = true, features = ["macros", "rt"] }

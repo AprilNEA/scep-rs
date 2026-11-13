@@ -1,5 +1,5 @@
 use pkcs8::DecodePrivateKey as _;
-use rsa::RsaPrivateKey;
+use rsa::PrivateKey;
 use x509_cert::{Certificate, der::DecodePem as _};
 
 use super::Identity;
@@ -18,10 +18,7 @@ fn pairs_a_certificate_with_its_key() {
         identity.certificate(),
         &Certificate::from_pem(RA_PEM).unwrap()
     );
-    assert_eq!(
-        identity.key(),
-        &RsaPrivateKey::from_pkcs8_pem(RA_KEY).unwrap()
-    );
+    assert_eq!(identity.key(), &PrivateKey::from_pkcs8_pem(RA_KEY).unwrap());
 }
 
 #[test]

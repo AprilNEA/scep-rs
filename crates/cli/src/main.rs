@@ -1,13 +1,12 @@
 //! `scep` command line.
 //!
-//! This release provides `serve`, a file-backed SCEP server that answers
-//! `GetCACaps` and `GetCACert` and records `PKIOperation` messages for
-//! inspection. The client commands and certificate issuance follow in the next
-//! release; the design and progress live in <https://github.com/AprilNEA/scep-rs>.
+//! `serve` provides discovery, capture-only operation and a static-challenge
+//! test CA for initial enrollment. The enrollment client is not implemented.
 
 use clap::{Parser, Subcommand};
 use tracing_subscriber::{EnvFilter, filter::LevelFilter};
 
+mod ca;
 mod serve;
 
 #[derive(Debug, Parser)]

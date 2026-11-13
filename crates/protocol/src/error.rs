@@ -2,6 +2,8 @@
 
 use der::asn1::ObjectIdentifier;
 
+use crate::FailInfo;
+
 /// Errors from decoding, encoding, or validating SCEP protocol data.
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
@@ -62,4 +64,88 @@ pub enum Error {
     /// A CMS certificate set holds a certificate that is not an X.509 certificate.
     #[error("CMS certificate set holds a non-X.509 certificate")]
     UnsupportedCertificate,
+
+    /// The message exceeds the configured byte limit.
+    #[error("message exceeds the configured byte limit")]
+    MessageTooLarge,
+
+    /// A decoded collection or field exceeds its configured limit.
+    #[error("{0} exceeds its configured limit")]
+    Limit(&'static str),
+
+    /// A required signed attribute is absent.
+    #[error("missing attribute {0}")]
+    MissingAttribute(ObjectIdentifier),
+
+    /// An attribute is duplicated, multivalued, mistyped or has an invalid value.
+    #[error("invalid attribute {0}")]
+    InvalidAttribute(ObjectIdentifier),
+
+    /// The message is not a supported SCEP operation or CMS structure.
+    #[error("invalid message: {0}")]
+    InvalidMessage(&'static str),
+
+    /// An algorithm or its parameters is outside the supported suite.
+    #[error("unsupported algorithm or parameters: {0}")]
+    Algorithm(ObjectIdentifier),
+
+    /// A message integrity check failed.
+    #[error("message integrity: {0}")]
+    Integrity(&'static str),
+
+    /// The configured policy requires one key for both proofs of possession.
+    #[error("CSR key differs from the CMS signer key")]
+    KeyBinding,
+
+    /// An RSA operation failed. RNG and internal errors are operational errors.
+    #[error("RSA: {0}")]
+    Rsa(#[from] rsa::Error),
+
+    /// A CMS or CSR signature is invalid.
+    #[error("signature: {0}")]
+    Signature(#[from] signature::Error),
+
+    /// The content encryption key or initialization vector has the wrong size.
+    #[error("AES key or IV length: {0}")]
+    CipherLength(#[from] cbc::cipher::InvalidLength),
+
+    /// The ciphertext has invalid PKCS#7 padding.
+    #[error("AES padding: {0}")]
+    Padding(#[from] cbc::cipher::block_padding::Error),
+
+    /// Operating system randomness is unavailable.
+    #[error("randomness: {0}")]
+    Random(#[from] getrandom::Error),
+
+    /// Construction of an outgoing CMS message failed.
+    #[error("CMS builder: {0}")]
+    CmsBuilder(#[from] cms::builder::Error),
+}
+
+impl Error {
+    /// The uniform wire failure code for an invalid request.
+    ///
+    /// `None` denotes an operational failure, which must not be disguised as a
+    /// client error or sent as a signed SCEP rejection.
+    #[must_use]
+    pub fn fail_info(&self) -> Option<FailInfo> {
+        match self {
+            Self::Random(_)
+            | Self::CmsBuilder(_)
+            | Self::Rsa(rsa::Error::Rng | rsa::Error::Internal) => None,
+            Self::Algorithm(_) => Some(FailInfo::BadAlg),
+            Self::Asn1(_)
+            | Self::PublicKey(_)
+            | Self::Pkcs1(_)
+            | Self::Pkcs8(_)
+            | Self::KeyMismatch
+            | Self::Integrity(_)
+            | Self::KeyBinding
+            | Self::Rsa(_)
+            | Self::Signature(_)
+            | Self::CipherLength(_)
+            | Self::Padding(_) => Some(FailInfo::BadMessageCheck),
+            _ => Some(FailInfo::BadRequest),
+        }
+    }
 }

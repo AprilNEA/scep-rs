@@ -39,15 +39,17 @@ openssl req -inform DER -in client.csr.der -verify -noout
 
 Both signatures verify, and the decrypted CSR matches byte for byte. `-noverify` skips trust-chain validation of the self-signed transport certificate, not verification of the CMS signature.
 
-## M2 blockers
+## Historical ASN.1 blocker and key binding
 
 ### BER eContent loses its constructed-string metadata through Any
 
-With `der 0.8.3` and `cms 0.3.0-rc.1`, `ContentInfo::from_ber` and BER decoding of its `SignedData` both succeed. The signer certificate has serial `01`, so this capture does not hit the sscep serial-number limit.
+With unpatched `der 0.8.3` and `cms 0.3.0-rc.1`, `ContentInfo::from_ber` and BER decoding of its `SignedData` both succeed. The signer certificate has serial `01`, so this capture does not hit the sscep serial-number limit.
 
 The eContent at offset 52 is a constructed indefinite-length OCTET STRING containing one 1,147-byte fragment. `SignedData.encap_content_info.econtent` stores that value as `Any`, which retains the fragment headers but not the constructed/indefinite header metadata. Decoding that `Any` as `OctetString` returns 1,151 bytes beginning `04 82 04 7b 30 80`, rather than the 1,147 envelope bytes beginning `30 80`. Inner `ContentInfo::from_ber` therefore fails with `expected SEQUENCE, got OCTET STRING`.
 
-The same issue reproduces without the capture: direct `OctetString::from_ber` on `24 80 04 01 61 04 01 62 00 00` yields `ab`; decoding through `Any::from_ber` and `decode_as_encoding(EncodingRules::Ber)` yields `04 01 61 04 01 62`. M2 requires an upstream fix. Do not normalize the signed message locally or assume that outer CMS decoding proves enrollment support.
+The same issue reproduces without the capture: direct `OctetString::from_ber` on `24 80 04 01 61 04 01 62 00 00` yields `ab`; decoding through unpatched `Any::from_ber` and `decode_as_encoding(EncodingRules::Ber)` yields `04 01 61 04 01 62`.
+
+The pinned upstream fix assembles the OCTET STRING fragments in owned `Any`. M2 verifies the digest over the original envelope octets and decrypts this capture without rewriting the signed message. These dependency changes are not released; see the [dependency pins and publication gate](../../../docs/design.md#4-dependencies).
 
 ### The signer key differs from the CSR key
 
@@ -60,4 +62,6 @@ cmp "$tmp/signer-public.pem" "$tmp/csr-public.pem"
 rm -rf "$tmp"
 ```
 
-This finding applies to the captured macOS version and profile; other Apple versions and configurations have not been tested. M2's planned [key-binding policy](../../../docs/design.md#key-binding-policy) keeps the default strict and permits distinct keys only through explicit per-responder configuration, not a Cargo feature. After the ASN.1 fix, acceptance must verify that the default rejects this request and the explicit opt-in returns the expected CSR and challenge. M1 remains capture-only; neither mode's enrollment behavior is implemented yet.
+This finding applies to the captured macOS version and profile; other Apple versions and configurations have not been tested. M2 implements the [key-binding policy](../../../docs/design.md#key-binding-policy): all strict entry points reject this request, while explicit `AllowDistinctKeys` returns `client.csr.der` and the expected challenge. Both signatures are verified in either mode; authorization remains the issuer's responsibility. There is no Cargo feature or Apple autodetection.
+
+The Apple private keys were not exported, so tests of encrypted response recovery use synthetic distinct-key requests. No M2 test installs an issued certificate through the native profile installer; that remains M5 acceptance.

@@ -7,7 +7,7 @@ use base64::{Engine as _, engine::general_purpose::STANDARD_PAD_INDIFFERENT};
 use bytes::Bytes;
 use http::{HeaderValue, Method, Request, Response, StatusCode, header};
 
-use crate::{caps::CaCapabilities, error::Error};
+use crate::{Limits, caps::CaCapabilities, error::Error};
 
 #[cfg(test)]
 mod tests;
@@ -60,17 +60,36 @@ enum OperationName {
 impl<B: Into<Bytes>> TryFrom<Request<B>> for Operation {
     type Error = Error;
 
-    /// Selects the operation from the query string and, for `PKIOperation`,
-    /// takes the message from the POST body or the GET `message` parameter.
+    /// Parses a request using [`Limits::default`].
+    fn try_from(request: Request<B>) -> Result<Self, Error> {
+        Self::from_request(request, &Limits::default())
+    }
+}
+
+impl Operation {
+    /// Selects the operation and bounds allocations using the supplied limits.
     ///
     /// A GET `message` is form-decoded first, so a `+` the client did not
     /// percent-encode arrives as a space; spaces are mapped back to `+` because
     /// a space is never valid base64. Padding is not required.
-    fn try_from(request: Request<B>) -> Result<Self, Error> {
+    ///
+    /// # Errors
+    /// Returns an error for malformed operations, unsupported methods,
+    /// oversized bodies/queries, or invalid base64. HTTP frameworks must also
+    /// bound request bodies while reading them from the network.
+    pub fn from_request<B: Into<Bytes>>(
+        request: Request<B>,
+        limits: &Limits,
+    ) -> Result<Self, Error> {
         let (parts, body) = request.into_parts();
+        let query = parts.uri.query().unwrap_or("");
+        let body = body.into();
+        if body.len() > limits.max_request_bytes || query.len() > limits.max_query_bytes {
+            return Err(Error::MessageTooLarge);
+        }
         let mut operation = None;
         let mut message = None;
-        for (key, value) in form_urlencoded::parse(parts.uri.query().unwrap_or("").as_bytes()) {
+        for (key, value) in form_urlencoded::parse(query.as_bytes()) {
             match &*key {
                 "operation" if operation.is_none() => operation = Some(value),
                 "message" if message.is_none() => message = Some(value),
@@ -90,10 +109,16 @@ impl<B: Into<Bytes>> TryFrom<Request<B>> for Operation {
                 identifier: message.map(std::borrow::Cow::into_owned),
             }),
             OperationName::PKIOperation => match parts.method {
-                Method::POST => Ok(Self::PkiOperation(body.into())),
+                Method::POST => Ok(Self::PkiOperation(body)),
                 Method::GET => {
                     let message = message.ok_or(Error::MissingMessage)?;
+                    if message.len() > limits.max_request_bytes.div_ceil(3).saturating_mul(4) {
+                        return Err(Error::MessageTooLarge);
+                    }
                     let decoded = STANDARD_PAD_INDIFFERENT.decode(message.replace(' ', "+"))?;
+                    if decoded.len() > limits.max_request_bytes {
+                        return Err(Error::MessageTooLarge);
+                    }
                     Ok(Self::PkiOperation(Bytes::from(decoded)))
                 }
                 method => Err(Error::UnsupportedMethod(method)),
@@ -120,11 +145,13 @@ pub fn ca_caps_response(caps: &CaCapabilities) -> Response<Bytes> {
 }
 
 /// The HTTP status that reports a request this module could not map to an
-/// [`Operation`]: `405` for a method other than GET or POST, `400` otherwise.
+/// [`Operation`]: `405` for an unsupported method, `413` for excess bytes,
+/// `400` otherwise.
 #[must_use]
 pub fn status_for(error: &Error) -> StatusCode {
     match error {
         Error::UnsupportedMethod(_) => StatusCode::METHOD_NOT_ALLOWED,
+        Error::MessageTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
         _ => StatusCode::BAD_REQUEST,
     }
 }
