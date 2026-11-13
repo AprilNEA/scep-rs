@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  packages = [ pkgs.cargo-deny pkgs.openssl pkgs.actionlint ];
+  packages = [ pkgs.cargo-deny pkgs.openssl pkgs.actionlint pkgs.sscep ];
 
   languages.rust = {
     enable = true;

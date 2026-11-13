@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadType</key><string>Configuration</string>
+  <key>PayloadVersion</key><integer>1</integer>
+  <key>PayloadIdentifier</key><string>rs.scep.m1.capture</string>
+  <key>PayloadUUID</key><string>F52E8E37-4F70-4A83-97FA-156C2E194B53</string>
+  <key>PayloadDisplayName</key><string>scep-rs M1 capture</string>
+  <key>PayloadDescription</key><string>Disposable SCEP interoperability test. The local capture server records the request and does not issue a certificate.</string>
+  <key>PayloadOrganization</key><string>scep-rs tests</string>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key><string>com.apple.security.scep</string>
+      <key>PayloadVersion</key><integer>1</integer>
+      <key>PayloadIdentifier</key><string>rs.scep.m1.capture.scep</string>
+      <key>PayloadUUID</key><string>35B52F53-0DDE-4214-81BA-7142BEB196A2</string>
+      <key>PayloadDisplayName</key><string>scep-rs test enrollment</string>
+      <key>PayloadContent</key>
+      <dict>
+        <key>URL</key><string>http://localhost:18080/scep</string>
+        <key>Name</key><string>scep-rs</string>
+        <key>Subject</key>
+        <array>
+          <array><array><string>CN</string><string>Apple test client</string></array></array>
+          <array><array><string>O</string><string>scep-rs tests</string></array></array>
+        </array>
+        <key>Challenge</key><string>scep-rs-m1-fixture</string>
+        <key>Key Type</key><string>RSA</string>
+        <key>Keysize</key><integer>2048</integer>
+        <key>Key Usage</key><integer>5</integer>
+        <key>Retries</key><integer>1</integer>
+        <key>RetryDelay</key><integer>5</integer>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>

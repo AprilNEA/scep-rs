@@ -1,16 +1,38 @@
-//! `scep` command line: `getcacaps`, `getcacert`, `enroll`, and `serve`, a
-//! file-backed test CA.
+//! `scep` command line.
 //!
-//! This release reserves the crate name. The binary only reports that. The first
-//! usable release is `0.1.0`; the design and progress live in
-//! <https://github.com/AprilNEA/scep-rs>.
+//! This release provides `serve`, a file-backed SCEP server that answers
+//! `GetCACaps` and `GetCACert` and records `PKIOperation` messages for
+//! inspection. The client commands and certificate issuance follow in the next
+//! release; the design and progress live in <https://github.com/AprilNEA/scep-rs>.
 
-use std::process::ExitCode;
+use clap::{Parser, Subcommand};
+use tracing_subscriber::{EnvFilter, filter::LevelFilter};
 
-fn main() -> ExitCode {
-    eprintln!(
-        "scep-cli {} reserves the crate name and has no commands yet; see https://github.com/AprilNEA/scep-rs",
-        env!("CARGO_PKG_VERSION")
-    );
-    ExitCode::FAILURE
+mod serve;
+
+#[derive(Debug, Parser)]
+#[command(version, about)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Serve SCEP over HTTP for one CA or RA certificate and key.
+    Serve(serve::Args),
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
+        .init();
+    match Cli::parse().command {
+        Command::Serve(args) => serve::run(args).await,
+    }
 }

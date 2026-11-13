@@ -3,10 +3,13 @@ all-features = true
 
 [advisories]
 yanked = "deny"
+ignore = [
+  { id = "RUSTSEC-2023-0071", reason = "Reviewed 2026-11-08: M1 only loads RSA identities and serves discovery; no signing or decryption is exposed. The upstream timing advisory remains unpatched. Reassess before implementing PKIOperation private-key operations; see docs/design.md section 6." },
+]
 
 [licenses]
 confidence-threshold = 0.93
-allow = ["Apache-2.0", "MIT"]
+allow = ["Apache-2.0", "MIT", "Unicode-3.0"]
 
 [bans]
 multiple-versions = "warn"
