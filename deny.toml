@@ -6,7 +6,9 @@ yanked = "deny"
 
 [licenses]
 confidence-threshold = 0.93
-allow = ["Apache-2.0", "MIT"]
+allow = ["Apache-2.0", "MIT", "Unicode-3.0"]
+# Preserve subtle's copyright notice and disclaimer when redistributing binaries.
+exceptions = [{ name = "subtle", allow = ["BSD-3-Clause"] }]
 
 [bans]
 multiple-versions = "warn"
@@ -15,3 +17,5 @@ wildcards = "deny"
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
+required-git-spec = "rev"
+allow-git = ["https://github.com/RustCrypto/formats"]

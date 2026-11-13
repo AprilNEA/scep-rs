@@ -1,6 +1,6 @@
 [package]
 name = "scep-cli"
-description = "SCEP (RFC 8894) command line: getcacaps, getcacert, enroll, and a file-backed test CA"
+description = "SCEP (RFC 8894) command line: discovery, capture, and a static-challenge test CA"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -15,6 +15,21 @@ name = "scep"
 path = "src/main.rs"
 
 [dependencies]
+anyhow = "1"
+axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio"] }
+bytes.workspace = true
+clap = { version = "4.6.7", features = ["derive"] }
+getrandom.workspace = true
+http.workspace = true
+rand.workspace = true
+scep.workspace = true
+sha2.workspace = true
+subtle = "2.6.1"
+thiserror.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "fs", "sync"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+zeroize.workspace = true
 
 [lints]
 workspace = true

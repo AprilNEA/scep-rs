@@ -1,9 +1,23 @@
-//! SCEP ([RFC 8894]) server: a sans-IO `Responder` that verifies and decrypts
-//! `PKCSReq` messages and builds `CertRep` replies, an `Issuer` trait for
-//! certificate policy, and a `handle()` function on `http` types.
+//! SCEP ([RFC 8894]) server: a sans-IO [`Responder`] for one CA or RA identity.
 //!
-//! This release reserves the crate name. It contains no code. The first usable
-//! release is `0.1.0`; the design and progress live in the [repository].
+//! A [`Responder`] verifies initial enrollment requests and constructs `CertRep`
+//! responses. The application-owned [`Issuer`] authorizes the request and
+//! obtains a certificate. Key binding is strict unless explicitly configured
+//! otherwise; the client certificate is never an authenticated identity.
 //!
 //! [RFC 8894]: https://www.rfc-editor.org/rfc/rfc8894
 //! [repository]: https://github.com/AprilNEA/scep-rs
+
+mod config;
+mod enrollment;
+mod error;
+mod handle;
+mod issuer;
+mod responder;
+
+pub use config::{KeyBindingPolicy, ServerConfig};
+pub use enrollment::{Enrollment, Rejected};
+pub use error::Error;
+pub use handle::{HandleError, handle};
+pub use issuer::{Issuance, Issuer};
+pub use responder::Responder;

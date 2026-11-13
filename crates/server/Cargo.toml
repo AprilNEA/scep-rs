@@ -11,6 +11,11 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+bytes.workspace = true
+http.workspace = true
+scep-protocol.workspace = true
+strum.workspace = true
+thiserror.workspace = true
 
 [lints]
 workspace = true

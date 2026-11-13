@@ -1,0 +1,9 @@
+[req]
+distinguished_name=dn
+attributes=attr
+prompt=no
+[dn]
+CN=sscep test client
+O=scep-rs tests
+[attr]
+challengePassword=secret
